@@ -18,7 +18,7 @@ run     apt-get -y install  python-django-tagging python-simplejson python-memca
 
 
 # Install Grafana
-run     mkdir /src/grafana && cd /src/grafana &&\
+run     mkdir -p /src/grafana && cd /src/grafana &&\
         wget http://grafanarel.s3.amazonaws.com/grafana-1.7.0.tar.gz &&\
         tar xzvf grafana-1.7.0.tar.gz --strip-components=1 && rm grafana-1.7.0.tar.gz
 
