@@ -39,8 +39,15 @@ ADD		influxdb/run.sh /usr/local/bin/run_influxdb
 RUN		chmod +x /usr/local/bin/run_influxdb
 
 # Configure Grafana
+ENV		INFLUXDB_DATA_USER data
+ENV		INFLUXDB_DATA_PW data
+ENV		INFLUXDB_GRAFANA_USER grafana
+ENV		INFLUXDB_GRAFANA_PW grafana
 ADD		./grafana/config.js /src/grafana/config.js
 #ADD	./grafana/scripted.json /src/grafana/app/dashboards/default.json
+ADD		configure.sh /configure.sh
+ADD		set_grafana.sh /set_grafana.sh
+RUN		chmod +x /*.sh && ./configure.sh && rm /*.sh
 
 # Configure nginx and supervisord
 ADD		./nginx/nginx.conf /etc/nginx/nginx.conf

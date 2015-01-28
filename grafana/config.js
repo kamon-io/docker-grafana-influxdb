@@ -22,14 +22,14 @@ define(['settings'], function(Settings) {
         data: {
           type: 'influxdb',
           url: "http://localhost:8086/db/data",
-          username: 'data',
-          password: 'data',
+          username: '<--DATA_USER-->',
+          password: '<--DATA_PW-->',
         },
         grafana: {
           type: 'influxdb',
           url: "http://localhost:8086/db/grafana",
-          username: 'grafana',
-          password: 'grafana',
+          username: '<--GRAFANA_USER-->',
+          password: '<--GRAFANA_PW-->',
           grafanaDB: true
         },
       },
