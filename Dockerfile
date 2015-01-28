@@ -1,6 +1,7 @@
 FROM	ubuntu:14.04
 
 ENV GRAFANA_VERSION 1.9.1
+ENV INFLUXDB_VERSION 0.8.8
 
 RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
 RUN		apt-get -y update
@@ -25,12 +26,8 @@ RUN		mkdir -p src/grafana && cd src/grafana && \
 			tar xzf grafana.tar.gz --strip-components=1 && rm grafana.tar.gz
 
 # Install InfluxDB
-RUN		apt-get update && \
-			DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends curl ca-certificates && \
-			curl -s -o /tmp/influxdb_latest_amd64.deb https://s3.amazonaws.com/influxdb/influxdb_latest_amd64.deb && \
-			dpkg -i /tmp/influxdb_latest_amd64.deb && \
-			rm /tmp/influxdb_latest_amd64.deb && \
-			rm -rf /var/lib/apt/lists/*
+RUN		wget http://s3.amazonaws.com/influxdb/influxdb_${INFLUXDB_VERSION}_amd64.deb && \
+			dpkg -i influxdb_${INFLUXDB_VERSION}_amd64.deb && rm influxdb_${INFLUXDB_VERSION}_amd64.deb
  
 # ----------------- #
 #   Configuration   #
