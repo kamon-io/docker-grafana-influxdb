@@ -1,5 +1,7 @@
 FROM	ubuntu:14.04
 
+ENV GRAFANA_VERSION 1.9.1
+
 RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
 RUN		apt-get -y update
 RUN		apt-get -y upgrade
@@ -17,11 +19,10 @@ RUN		apt-get -y install  python-django-tagging python-simplejson python-memcache
 			python-pysqlite2 python-support python-pip gunicorn supervisor nginx-light nodejs \
 			git wget curl openjdk-7-jre build-essential python-dev
 
-
-# Install Grafana
-RUN		mkdir -p /src/grafana && cd /src/grafana &&\
-			wget http://grafanarel.s3.amazonaws.com/grafana-1.7.0.tar.gz &&\
-			tar xzvf grafana-1.7.0.tar.gz --strip-components=1 && rm grafana-1.7.0.tar.gz
+# Install Grafana to /src/grafana
+RUN		mkdir -p src/grafana && cd src/grafana && \
+			wget http://grafanarel.s3.amazonaws.com/grafana-${GRAFANA_VERSION}.tar.gz -O grafana.tar.gz && \
+			tar xzf grafana.tar.gz --strip-components=1 && rm grafana.tar.gz
 
 # Install InfluxDB
 RUN		apt-get update && \
