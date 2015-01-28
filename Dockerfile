@@ -37,21 +37,34 @@ RUN		wget http://s3.amazonaws.com/influxdb/influxdb_${INFLUXDB_VERSION}_amd64.de
 ADD		influxdb/config.toml /etc/influxdb/config.toml 
 ADD		influxdb/run.sh /usr/local/bin/run_influxdb
 RUN		chmod +x /usr/local/bin/run_influxdb
-
-# Configure Grafana
+# These two databases have to be created. These variables are used by set_influxdb.sh and set_grafana.sh
+ENV		PRE_CREATE_DB data grafana
 ENV		INFLUXDB_DATA_USER data
 ENV		INFLUXDB_DATA_PW data
 ENV		INFLUXDB_GRAFANA_USER grafana
 ENV		INFLUXDB_GRAFANA_PW grafana
+ENV		ROOT_PW root
+
+# Configure Grafana
 ADD		./grafana/config.js /src/grafana/config.js
 #ADD	./grafana/scripted.json /src/grafana/app/dashboards/default.json
-ADD		configure.sh /configure.sh
-ADD		set_grafana.sh /set_grafana.sh
-RUN		chmod +x /*.sh && ./configure.sh && rm /*.sh
+
+ADD		./configure.sh /configure.sh
+ADD		./set_grafana.sh /set_grafana.sh
+ADD		./set_influxdb.sh /set_influxdb.sh
+RUN		chmod +x /*.sh && ./configure.sh
 
 # Configure nginx and supervisord
 ADD		./nginx/nginx.conf /etc/nginx/nginx.conf
 ADD		./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# ----------- #
+#   Cleanup   #
+# ----------- #
+
+RUN		apt-get autoremove -y wget curl && \
+			apt-get -y clean && \
+			rm -rf /var/lib/apt/lists/* && rm /*.sh
 
 # ---------------- #
 #   Expose Ports   #
