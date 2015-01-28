@@ -4,21 +4,21 @@ ENV GRAFANA_VERSION 1.9.1
 ENV INFLUXDB_VERSION 0.8.8
 
 RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
-RUN		apt-get -y update
-RUN		apt-get -y upgrade
-
+RUN		apt-get -y update && apt-get -y upgrade
 
 # ---------------- #
 #   Installation   #
 # ---------------- #
 
 # Install all prerequisites
+RUN 	apt-get -y install wget nginx-light supervisor curl
+
 RUN 	apt-get -y install software-properties-common
 RUN		add-apt-repository -y ppa:chris-lea/node.js
 RUN		apt-get -y update
 RUN		apt-get -y install  python-django-tagging python-simplejson python-memcache python-ldap python-cairo  \
-			python-pysqlite2 python-support python-pip gunicorn supervisor nginx-light nodejs \
-			git wget curl openjdk-7-jre build-essential python-dev
+			python-pysqlite2 python-support python-pip gunicorn nodejs \
+			git openjdk-7-jre build-essential python-dev
 
 # Install Grafana to /src/grafana
 RUN		mkdir -p src/grafana && cd src/grafana && \
@@ -35,8 +35,8 @@ RUN		wget http://s3.amazonaws.com/influxdb/influxdb_${INFLUXDB_VERSION}_amd64.de
 
 # Configure InfluxDB
 ADD		influxdb/config.toml /etc/influxdb/config.toml 
-ADD		influxdb/RUN.sh /usr/local/bin/RUN_influxdb
-RUN		chmod 0755 /usr/local/bin/RUN_influxdb
+ADD		influxdb/run.sh /usr/local/bin/run_influxdb
+RUN		chmod +x /usr/local/bin/run_influxdb
 
 # Configure Grafana
 ADD		./grafana/config.js /src/grafana/config.js
