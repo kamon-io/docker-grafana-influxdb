@@ -15,15 +15,15 @@ file   = "/var/log/easydeploy/influxdb.log"         # stdout to log to standard 
 # Configure the admin server
 [admin]
 port   = 8083              # binding is disabled if the port isn't set
-assets = "/opt/influxdb/current/admin"
+assets = "./admin"
 
 # Configure the http api
 [api]
 port     = 8086    # binding is disabled if the port isn't set
-# ssl-port = 8084    # Ssl support is enabled if you set a port and cert
-# ssl-cert = "/cert.pem"
+# ssl-port = 8084    # SSL support is enabled if you set a port and cert
+# ssl-cert = "/path/to/cert.pem"
 
-# connections will timeout after this amount of time. Ensures that clients that misbehave
+# connections will timeout after this amount of time. Ensures that clients that misbehave 
 # and keep alive connections they don't use won't end up connection a million times.
 # However, if a request is taking longer than this to complete, could be a problem.
 read-timeout = "5s"
@@ -35,12 +35,6 @@ read-timeout = "5s"
   enabled = false
   # port = 2003
   # database = ""  # store graphite data in this database
-  # udp_enabled = true # enable udp interface on the same port as the tcp interface
-
-  [input_plugins.udp]
-  enabled = false
-  # port = 4444
-  # database = ""
 
 # Raft configuration
 [raft]
@@ -80,7 +74,7 @@ protobuf_port = 8099
 protobuf_timeout = "2s" # the write timeout on the protobuf conn any duration parseable by time.ParseDuration
 protobuf_heartbeat = "200ms" # the heartbeat interval between the servers. must be parseable by time.ParseDuration
 protobuf_min_backoff = "1s" # the minimum backoff after a failed heartbeat attempt
-protobuf_max_backoff = "10s" # the maxmimum backoff after a failed heartbeat attempt
+protobuf_max_backoff = "10s" # the maximum backoff after a failed heartbeat attempt
 
 # How many write requests to potentially buffer in memory per server. If the buffer gets filled then writes
 # will still be logged and once the server has caught up (or come back online) the writes
@@ -91,7 +85,7 @@ write-buffer-size = 10000
 # expected number of responses exceed this number then querying will
 # happen sequentially and the buffer size will be limited to this
 # number
-max-response-buffer-size = 100
+max-response-buffer-size = 100000
 
 # When queries get distributed out to shards, they go in parallel. This means that results can get buffered
 # in memory since results will come in any order, but have to be processed in the correct time order.
@@ -118,10 +112,6 @@ max-open-shards = 0
 # they get flushed into backend.
 point-batch-size = 100
 
-# The number of points to batch in memory before writing them to leveldb. Lowering this number will
-# reduce the memory usage, but will result in slower writes.
-write-batch-size = 5000000
-
 # These options specify how data is sharded across the cluster. There are two
 # shard configurations that have the same knobs: short term and long term.
 # Any series that begins with a capital letter like Exceptions will be written
@@ -145,7 +135,7 @@ write-batch-size = 5000000
   # split will determine how many shards to split each duration into. For example,
   # if we created a shard for 2014-02-10 and split was set to 2. Then two shards
   # would be created that have the data for 2014-02-10. By default, data will
-  # be split into those two shards deterministically by hashing the (database, serise)
+  # be split into those two shards deterministically by hashing the (database, series)
   # tuple. That means that data for a given series will be written to a single shard
   # making querying efficient. That can be overridden with the next option.
   split = 1
