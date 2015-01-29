@@ -3,6 +3,9 @@ FROM	ubuntu:14.04
 ENV GRAFANA_VERSION 1.9.1
 ENV INFLUXDB_VERSION 0.8.8
 
+# Prevent some error messages
+ENV DEBIAN_FRONTEND noninteractive
+
 #RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
 RUN		apt-get -y update && apt-get -y upgrade
 
