@@ -37,7 +37,6 @@ RUN		wget http://s3.amazonaws.com/influxdb/influxdb_${INFLUXDB_VERSION}_amd64.de
 # Configure InfluxDB
 ADD		influxdb/config.toml /etc/influxdb/config.toml 
 ADD		influxdb/run.sh /usr/local/bin/run_influxdb
-RUN		chmod +x /usr/local/bin/run_influxdb
 # These two databases have to be created. These variables are used by set_influxdb.sh and set_grafana.sh
 ENV		PRE_CREATE_DB data grafana
 ENV		INFLUXDB_DATA_USER data
@@ -53,7 +52,6 @@ ADD		./grafana/config.js /src/grafana/config.js
 ADD		./configure.sh /configure.sh
 ADD		./set_grafana.sh /set_grafana.sh
 ADD		./set_influxdb.sh /set_influxdb.sh
-RUN		chmod +x /*.sh && ./configure.sh
 
 # Configure nginx and supervisord
 ADD		./nginx/nginx.conf /etc/nginx/nginx.conf
