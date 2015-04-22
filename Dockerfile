@@ -52,6 +52,7 @@ ADD		./grafana/config.js /src/grafana/config.js
 ADD		./configure.sh /configure.sh
 ADD		./set_grafana.sh /set_grafana.sh
 ADD		./set_influxdb.sh /set_influxdb.sh
+RUN 		/configure.sh
 
 # Configure nginx and supervisord
 ADD		./nginx/nginx.conf /etc/nginx/nginx.conf
