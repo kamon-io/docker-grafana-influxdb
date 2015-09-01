@@ -1,7 +1,9 @@
 #!/bin/bash
 
 set -m
-CONFIG_FILE="/etc/influxdb/config.toml"
+CONFIG_FILE="/etc/influxdb/influxdb.conf"
+INFLUX_BIN="/opt/influxdb/versions/0.9.3/influx"
+INFLUXD_BIN="/opt/influxdb/versions/0.9.3/influxd"
 
 API_URL="http://localhost:8086"
 
@@ -40,12 +42,16 @@ API_URL="http://localhost:8086"
 #    API_URL="https://localhost:8084"
 #fi
 
+function query_endpoint() {
+    curl -u "root:${ROOT_PW}" -s -k -G --data-urlencode "q=$1" "${API_URL}/query"; echo
+}
+
 echo "=> About to create the following database: ${PRE_CREATE_DB}"
 if [ -f "/.influxdb_configured" ]; then
     echo "=> Database had been created before, skipping ..."
 else
     echo "=> Starting InfluxDB ..."
-    exec /usr/bin/influxdb -config=${CONFIG_FILE} &
+    exec "$INFLUXD_BIN" -config=${CONFIG_FILE} -pidfile /var/run/influxdb/influxd.pid &
     arr=$(echo ${PRE_CREATE_DB} | tr ";" "\n")
 
     #wait for the startup of influxdb
@@ -55,24 +61,32 @@ else
         sleep 3 
         curl -k ${API_URL}/ping 2> /dev/null
         RET=$?
+		ps ax
     done
     echo ""
+
+	#create the root user
+	$INFLUX_BIN -execute "create user root with password '${ROOT_PW}' with all privileges" || exit 1
+	$INFLUX_BIN -username "root" -password "${ROOT_PW}" -execute "show users" || exit 1
 
     for x in $arr
     do
         echo "=> Creating database: ${x}"
-        curl -s -k -X POST -d "{\"name\":\"${x}\"}" $(echo ${API_URL}'/db?u=root&p=root')
+        query_endpoint "create database ${x}"
     done
     echo ""
     
     echo "=> Creating User for database: data"
-    curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_DATA_USER}\",\"password\":\"${INFLUXDB_DATA_PW}\"}" $(echo ${API_URL}'/db/data/users?u=root&p=root')
+	query_endpoint "create user $INFLUXDB_DATA_USER with password '$INFLUXDB_DATA_PW'"
+
+    echo "=> Granting User rights for database: data"
+	query_endpoint "grant all on data to $INFLUXDB_DATA_USER"
+
     echo "=> Creating User for database: grafana"
-    curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_GRAFANA_USER}\",\"password\":\"${INFLUXDB_GRAFANA_PW}\"}" $(echo ${API_URL}'/db/grafana/users?u=root&p=root')
-    echo ""
-    
-    echo "=> Changing Password for User: root"
-    curl -s -k -X POST -d "{\"password\":\"${ROOT_PW}\"}" $(echo ${API_URL}'/cluster_admins/root?u=root&p=root')
+	query_endpoint "create user $INFLUXDB_GRAFANA_USER with password '$INFLUXDB_GRAFANA_PW'"
+
+    echo "=> Granting User rights for database: grafana"
+	query_endpoint "grant all on grafana to $INFLUXDB_GRAFANA_USER"
     echo ""
 
     touch "/.influxdb_configured"

@@ -26,9 +26,9 @@ To start a container with your custom config: see `start` script.
 To change ports, consider the following:
 
 - `80`: edit `Dockerfile, ngingx/nginx.conf and start script`.
-- `8083`: edit: `Dockerfile, influxDB/config.toml and start script`.
+- `8083`: edit: `Dockerfile, influxdb/influxdb.conf and start script`.
 - `8084`: edit: to be announced.
-- `8086`: edit: `Dockerfile, influxDB/config.toml, grafana/config.js, set_influxdb.sh and start script`.
+- `8086`: edit: `Dockerfile, influxdb/influxdb.conf, grafana/config.js, set_influxdb.sh and start script`.
 
 ### Running container under boot2docker on Mac OS X ###
 Currently, there is an issue with boot2docker dicussed [here](https://github.com/kamon-io/docker-grafana-graphite/issues/5). To bypass this, change the last line in start script to the following to start the container:
