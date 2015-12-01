@@ -7,7 +7,7 @@ if [ -f /.grafana_configured ]; then
 fi
 
 echo "=> Configuring grafana"
-sed -i -e "s/<--INFLUXDB_URL-->/${INFLUXDB_URL}/g" \
+sed -i -e "s#<--INFLUXDB_URL-->#${INFLUXDB_URL}#g" \
        -e "s/<--DATA_USER-->/${INFLUXDB_DATA_USER}/g" \
        -e "s/<--DATA_PW-->/${INFLUXDB_DATA_PW}/g" \
        -e "s/<--GRAFANA_USER-->/${INFLUXDB_GRAFANA_USER}/g" \
