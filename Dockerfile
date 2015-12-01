@@ -39,6 +39,7 @@ ADD		influxdb/config.toml /etc/influxdb/config.toml
 ADD		influxdb/run.sh /usr/local/bin/run_influxdb
 # These two databases have to be created. These variables are used by set_influxdb.sh and set_grafana.sh
 ENV		PRE_CREATE_DB data grafana
+ENV		INFLUXDB_URL http://localhost:8086
 ENV		INFLUXDB_DATA_USER data
 ENV		INFLUXDB_DATA_PW data
 ENV		INFLUXDB_GRAFANA_USER grafana
