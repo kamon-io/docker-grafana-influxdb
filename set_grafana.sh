@@ -22,7 +22,7 @@ echo "   InfluxDB USERNAME: ${INFLUXDB_DATA_USER}"
 echo "   InfluxDB PASSWORD: ${INFLUXDB_DATA_PW}"
 echo "   InfluxDB DB GRAFANA NAME:  grafana"
 echo "   InfluxDB USERNAME: ${INFLUXDB_GRAFANA_USER}"
-echo "   InfluxDB PASSWORD: ${INFLUXDB_GRAFANA_USER}"
+echo "   InfluxDB PASSWORD: ${INFLUXDB_GRAFANA_PW}"
 echo "   ** Please check your environment variables if you find something is misconfigured. **"
 echo "=> Done!"
 exit 0
