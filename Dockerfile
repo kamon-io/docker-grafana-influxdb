@@ -1,7 +1,7 @@
 FROM	ubuntu:14.04
 
 ENV GRAFANA_VERSION 1.9.1
-ENV INFLUXDB_VERSION 0.8.8
+ENV INFLUXDB_VERSION 0.9.5.1
 
 # Prevent some error messages
 ENV DEBIAN_FRONTEND noninteractive
@@ -29,7 +29,7 @@ RUN		mkdir -p src/grafana && cd src/grafana && \
 # Install InfluxDB
 RUN		wget http://s3.amazonaws.com/influxdb/influxdb_${INFLUXDB_VERSION}_amd64.deb && \
 			dpkg -i influxdb_${INFLUXDB_VERSION}_amd64.deb && rm influxdb_${INFLUXDB_VERSION}_amd64.deb
- 
+
 # ----------------- #
 #   Configuration   #
 # ----------------- #
