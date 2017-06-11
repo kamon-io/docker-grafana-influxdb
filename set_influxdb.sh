@@ -61,14 +61,14 @@ else
     for x in $arr
     do
         echo "=> Creating database: ${x}"
-        curl -G -s -k ${API_URL}/query --data-urlencode "q=CREATE DATABASE ${x}"
+        curl -s -k -XPOST ${API_URL}/query --data-urlencode "q=CREATE DATABASE ${x}"
     done
     echo ""
     
     echo "=> Creating User for database: data"
-    curl -G -s -k ${API_URL}/query --data-urlencode "q=CREATE USER ${INFLUXDB_DATA_USER} WITH PASSWORD '${ROOT_PW}'"
+    curl -s -k -XPOST ${API_URL}/query --data-urlencode "q=CREATE USER \"${INFLUXDB_DATA_USER}\" WITH PASSWORD '${ROOT_PW}'"
     echo "=> Creating User for database: grafana"
-    curl -G -s -k ${API_URL}/query --data-urlencode "q=CREATE USER ${INFLUXDB_GRAFANA_USER} WITH PASSORD '${ROOT_PW}'"
+    curl -s -k -XPOST ${API_URL}/query --data-urlencode "q=CREATE USER \"${INFLUXDB_GRAFANA_USER}\" WITH PASSWORD '${ROOT_PW}'"
     echo ""
     
     touch "/.influxdb_configured"
