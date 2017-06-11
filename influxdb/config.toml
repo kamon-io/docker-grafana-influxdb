@@ -1,168 +1,322 @@
-# Welcome to the InfluxDB configuration file.
+### Welcome to the InfluxDB configuration file.
 
-# If hostname (on the OS) doesn't return a name that can be resolved by the other
-# systems in the cluster, you'll have to set the hostname to an IP or something
-# that can be resolved here.
-# hostname = ""
+# Once every 24 hours InfluxDB will report anonymous data to m.influxdb.com
+# The data includes raft id (random 8 bytes), os, arch, version, and metadata.
+# We don't track ip addresses of servers reporting. This is only used
+# to track the number of instances running and the versions, which
+# is very helpful for us.
+# Change this option to true to disable reporting.
+reporting-disabled = false
 
-bind-address = "0.0.0.0"
+###
+### Enterprise registration control
+###
 
-[logging]
-# logging level can be one of "debug", "info", "warn" or "error"
-level  = "info"
-file   = "/var/log/easydeploy/influxdb.log"         # stdout to log to standard out
+[registration]
+# enabled = true
+# url = "https://enterprise.influxdata.com" # The Enterprise server URL
+# token = "" # Registration token for Enterprise server
 
-# Configure the admin server
-[admin]
-port   = 8083              # binding is disabled if the port isn't set
-assets = "./admin"
+###
+### [meta]
+###
+### Controls the parameters for the Raft consensus group that stores metadata
+### about the InfluxDB cluster.
+###
 
-# Configure the http api
-[api]
-port     = 8086    # binding is disabled if the port isn't set
-# ssl-port = 8084    # SSL support is enabled if you set a port and cert
-# ssl-cert = "/path/to/cert.pem"
+[meta]
+  dir = "/var/lib/influxdb/meta"
+  hostname = "localhost"
+  bind-address = ":8088"
+  retention-autocreate = true
+  election-timeout = "1s"
+  heartbeat-timeout = "1s"
+  leader-lease-timeout = "500ms"
+  commit-timeout = "50ms"
+  cluster-tracing = false
 
-# connections will timeout after this amount of time. Ensures that clients that misbehave 
-# and keep alive connections they don't use won't end up connection a million times.
-# However, if a request is taking longer than this to complete, could be a problem.
-read-timeout = "5s"
+  # If enabled, when a Raft cluster loses a peer due to a `DROP SERVER` command,
+  # the leader will automatically ask a non-raft peer node to promote to a raft
+  # peer. This only happens if there is a non-raft peer node available to promote.
+  # This setting only affects the local node, so to ensure if operates correctly, be sure to set
+  # it in the config of every node.
+  raft-promotion-enabled = true
 
-[input_plugins]
+###
+### [data]
+###
+### Controls where the actual shard data for InfluxDB lives and how it is
+### flushed from the WAL. "dir" may need to be changed to a suitable place
+### for your system, but the WAL settings are an advanced configuration. The
+### defaults should work for most systems.
+###
 
-  # Configure the graphite api
-  [input_plugins.graphite]
-  enabled = false
-  # port = 2003
-  # database = ""  # store graphite data in this database
+[data]
+  dir = "/var/lib/influxdb/data"
 
-# Raft configuration
-[raft]
-# The raft port should be open between all servers in a cluster.
-# However, this port shouldn't be accessible from the internet.
+  # Controls the engine type for new shards. Options are b1, bz1, or tsm1.
+  # b1 is the 0.9.2 storage engine, bz1 is the 0.9.3 and 0.9.4 engine.
+  # tsm1 is the 0.9.5 engine and is currenly EXPERIMENTAL. Until 0.9.5 is
+  # actually released data written into a tsm1 engine may be need to be wiped
+  # between upgrades.
+  # engine ="bz1"
 
-port = 8090
+  # The following WAL settings are for the b1 storage engine used in 0.9.2. They won't
+  # apply to any new shards created after upgrading to a version > 0.9.3.
+  max-wal-size = 104857600 # Maximum size the WAL can reach before a flush. Defaults to 100MB.
+  wal-flush-interval = "10m" # Maximum time data can sit in WAL before a flush.
+  wal-partition-flush-delay = "2s" # The delay time between each WAL partition being flushed.
 
-# Where the raft logs are stored. The user running InfluxDB will need read/write access.
-dir  = "/var/easydeploy/share/raft"
+  # These are the WAL settings for the storage engine >= 0.9.3
+  wal-dir = "/var/lib/influxdb/wal"
+  wal-enable-logging = true
 
-# election-timeout = "1s"
+  # When a series in the WAL in-memory cache reaches this size in bytes it is marked as ready to
+  # flush to the index
+  # wal-ready-series-size = 25600
 
-[storage]
-dir = "/var/easydeploy/share/db"
-# How many requests to potentially buffer in memory. If the buffer gets filled then writes
-# will still be logged and once the local storage has caught up (or compacted) the writes
-# will be replayed from the WAL
-write-buffer-size = 10000
+  # Flush and compact a partition once this ratio of series are over the ready size
+  # wal-compaction-threshold = 0.6
+
+  # Force a flush and compaction if any series in a partition gets above this size in bytes
+  # wal-max-series-size = 2097152
+
+  # Force a flush of all series and full compaction if there have been no writes in this
+  # amount of time. This is useful for ensuring that shards that are cold for writes don't
+  # keep a bunch of data cached in memory and in the WAL.
+  # wal-flush-cold-interval = "10m"
+
+  # Force a partition to flush its largest series if it reaches this approximate size in
+  # bytes. Remember there are 5 partitions so you'll need at least 5x this amount of memory.
+  # The more memory you have, the bigger this can be.
+  # wal-partition-size-threshold = 20971520
+
+  # Whether queries should be logged before execution. Very useful for troubleshooting, but will
+  # log any sensitive data contained within a query.
+  # query-log-enabled = true
+
+###
+### [hinted-handoff]
+###
+### Controls the hinted handoff feature, which allows nodes to temporarily
+### store queued data when one node of a cluster is down for a short period
+### of time.
+###
+
+[hinted-handoff]
+  enabled = true
+  dir = "/var/lib/influxdb/hh"
+  max-size = 1073741824
+  max-age = "168h"
+  retry-rate-limit = 0
+
+  # Hinted handoff will start retrying writes to down nodes at a rate of once per second.
+  # If any error occurs, it will backoff in an exponential manner, until the interval
+  # reaches retry-max-interval. Once writes to all nodes are successfully completed the
+  # interval will reset to retry-interval.
+  retry-interval = "1s"
+  retry-max-interval = "1m"
+
+  # Interval between running checks for data that should be purged. Data is purged from
+  # hinted-handoff queues for two reasons. 1) The data is older than the max age, or
+  # 2) the target node has been dropped from the cluster. Data is never dropped until
+  # it has reached max-age however, for a dropped node or not.
+  purge-interval = "1h"
+
+###
+### [cluster]
+###
+### Controls non-Raft cluster behavior, which generally includes how data is
+### shared across shards.
+###
 
 [cluster]
-# A comma separated list of servers to seed
-# this server. this is only relevant when the
-# server is joining a new cluster. Otherwise
-# the server will use the list of known servers
-# prior to shutting down. Any server can be pointed to
-# as a seed. It will find the Raft leader automatically.
+  shard-writer-timeout = "10s" # The time within which a shard must respond to write.
+  write-timeout = "5s" # The time within which a write operation must complete on the cluster.
 
-# Here's an example. Note that the port on the host is the same as the raft port.
-# seed-servers = ["hosta:8090","hostb:8090"]
+###
+### [retention]
+###
+### Controls the enforcement of retention policies for evicting old data.
+###
 
-# Replication happens over a TCP connection with a Protobuf protocol.
-# This port should be reachable between all servers in a cluster.
-# However, this port shouldn't be accessible from the internet.
+[retention]
+  enabled = true
+  check-interval = "30m"
 
-protobuf_port = 8099
-protobuf_timeout = "2s" # the write timeout on the protobuf conn any duration parseable by time.ParseDuration
-protobuf_heartbeat = "200ms" # the heartbeat interval between the servers. must be parseable by time.ParseDuration
-protobuf_min_backoff = "1s" # the minimum backoff after a failed heartbeat attempt
-protobuf_max_backoff = "10s" # the maximum backoff after a failed heartbeat attempt
+###
+### [shard-precreation]
+###
+### Controls the precreation of shards, so they are created before data arrives.
+### Only shards that will exist in the future, at time of creation, are precreated.
 
-# How many write requests to potentially buffer in memory per server. If the buffer gets filled then writes
-# will still be logged and once the server has caught up (or come back online) the writes
-# will be replayed from the WAL
-write-buffer-size = 10000
+[shard-precreation]
+  enabled = true
+  check-interval = "10m"
+  advance-period = "30m"
 
-# the maximum number of responses to buffer from remote nodes, if the
-# expected number of responses exceed this number then querying will
-# happen sequentially and the buffer size will be limited to this
-# number
-max-response-buffer-size = 100000
+###
+### Controls the system self-monitoring, statistics and diagnostics.
+###
+### The internal database for monitoring data is created automatically if
+### if it does not already exist. The target retention within this database
+### is called 'monitor' and is also created with a retention period of 7 days
+### and a replication factor of 1, if it does not exist. In all cases the
+### this retention policy is configured as the default for the database.
 
-# When queries get distributed out to shards, they go in parallel. This means that results can get buffered
-# in memory since results will come in any order, but have to be processed in the correct time order.
-# Setting this higher will give better performance, but you'll need more memory. Setting this to 1 will ensure
-# that you don't need to buffer in memory, but you won't get the best performance.
-concurrent-shard-query-limit = 10
+[monitor]
+  store-enabled = true # Whether to record statistics internally.
+  store-database = "_internal" # The destination database for recorded statistics
+  store-interval = "10s" # The interval at which to record statistics
 
-[leveldb]
+###
+### [admin]
+###
+### Controls the availability of the built-in, web-based admin interface. If HTTPS is
+### enabled for the admin interface, HTTPS must also be enabled on the [http] service.
+###
 
-# Maximum mmap open files, this will affect the virtual memory used by
-# the process
-max-open-files = 40
+[admin]
+  enabled = true
+  bind-address = ":8083"
+  https-enabled = false
+  https-certificate = "/etc/ssl/influxdb.pem"
 
-# LRU cache size, LRU is used by leveldb to store contents of the
-# uncompressed sstables. You can use `m` or `g` prefix for megabytes
-# and gigabytes, respectively.
-lru-cache-size = "200m"
+###
+### [http]
+###
+### Controls how the HTTP endpoints are configured. These are the primary
+### mechanism for getting data into and out of InfluxDB.
+###
 
-# The default setting on this is 0, which means unlimited. Set this to something if you want to
-# limit the max number of open files. max-open-files is per shard so this * that will be max.
-max-open-shards = 0
+[http]
+  enabled = true
+  bind-address = ":8086"
+  auth-enabled = false
+  log-enabled = true
+  write-tracing = false
+  pprof-enabled = false
+  https-enabled = false
+  https-certificate = "/etc/ssl/influxdb.pem"
 
-# The default setting is 100. This option tells how many points will be fetched from LevelDb before
-# they get flushed into backend.
-point-batch-size = 100
+###
+### [[graphite]]
+###
+### Controls one or many listeners for Graphite data.
+###
 
-# These options specify how data is sharded across the cluster. There are two
-# shard configurations that have the same knobs: short term and long term.
-# Any series that begins with a capital letter like Exceptions will be written
-# into the long term storage. Any series beginning with a lower case letter
-# like exceptions will be written into short term. The idea being that you
-# can write high precision data into short term and drop it after a couple
-# of days. Meanwhile, continuous queries can run downsampling on the short term
-# data and write into the long term area.
-[sharding]
-  # how many servers in the cluster should have a copy of each shard.
-  # this will give you high availability and scalability on queries
-  replication-factor = 1
+[[graphite]]
+  enabled = false
+  # database = "graphite"
+  # bind-address = ":2003"
+  # protocol = "tcp"
+  # consistency-level = "one"
+  # name-separator = "."
 
-  [sharding.short-term]
-  # each shard will have this period of time. Note that it's best to have
-  # group by time() intervals on all queries be < than this setting. If they are
-  # then the aggregate is calculated locally. Otherwise, all that data gets sent
-  # over the network when doing a query.
-  duration = "7d"
+  # These next lines control how batching works. You should have this enabled
+  # otherwise you could get dropped metrics or poor performance. Batching
+  # will buffer points in memory if you have many coming in.
 
-  # split will determine how many shards to split each duration into. For example,
-  # if we created a shard for 2014-02-10 and split was set to 2. Then two shards
-  # would be created that have the data for 2014-02-10. By default, data will
-  # be split into those two shards deterministically by hashing the (database, series)
-  # tuple. That means that data for a given series will be written to a single shard
-  # making querying efficient. That can be overridden with the next option.
-  split = 1
+  # batch-size = 1000 # will flush if this many points get buffered
+  # batch-pending = 5 # number of batches that may be pending in memory
+  # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
+  # udp-read-buffer = 0 # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
 
-  # You can override the split behavior to have the data for series that match a
-  # given regex be randomly distributed across the shards for a given interval.
-  # You can use this if you have a hot spot for a given time series writing more
-  # data than a single server can handle. Most people won't have to resort to this
-  # option. Also note that using this option means that queries will have to send
-  # all data over the network so they won't be as efficient.
-  # split-random = "/^hf.*/"
+  ## "name-schema" configures tag names for parsing the metric name from graphite protocol;
+  ## separated by `name-separator`.
+  ## The "measurement" tag is special and the corresponding field will become
+  ## the name of the metric.
+  ## e.g. "type.host.measurement.device" will parse "server.localhost.cpu.cpu0" as
+  ## {
+  ##     measurement: "cpu",
+  ##     tags: {
+  ##         "type": "server",
+  ##         "host": "localhost,
+  ##         "device": "cpu0"
+  ##     }
+  ## }
+  # name-schema = "type.host.measurement.device"
 
-  [sharding.long-term]
-  duration = "30d"
-  split = 1
-  # split-random = "/^Hf.*/"
+  ## If set to true, when the input metric name has more fields than `name-schema` specified,
+  ## the extra fields will be ignored.
+  ## Otherwise an error will be logged and the metric rejected.
+  # ignore-unnamed = true
 
-[wal]
+###
+### [collectd]
+###
+### Controls the listener for collectd data.
+###
 
-dir   = "/var/easydeploy/share/wal"
-flush-after = 1000 # the number of writes after which wal will be flushed, 0 for flushing on every write
-bookmark-after = 1000 # the number of writes after which a bookmark will be created
+[collectd]
+  enabled = false
+  # bind-address = ""
+  # database = ""
+  # typesdb = ""
 
-# the number of writes after which an index entry is created pointing
-# to the offset of the first request, default to 1k
-index-after = 1000
+  # These next lines control how batching works. You should have this enabled
+  # otherwise you could get dropped metrics or poor performance. Batching
+  # will buffer points in memory if you have many coming in.
 
-# the number of requests per one log file, if new requests came in a
-# new log file will be created
-requests-per-logfile = 10000
+  # batch-size = 1000 # will flush if this many points get buffered
+  # batch-pending = 5 # number of batches that may be pending in memory
+  # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
+  # read-buffer = 0 # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
+
+###
+### [opentsdb]
+###
+### Controls the listener for OpenTSDB data.
+###
+
+[opentsdb]
+  enabled = false
+  # bind-address = ":4242"
+  # database = "opentsdb"
+  # retention-policy = ""
+  # consistency-level = "one"
+  # tls-enabled = false
+  # certificate= ""
+
+  # These next lines control how batching works. You should have this enabled
+  # otherwise you could get dropped metrics or poor performance. Only points
+  # metrics received over the telnet protocol undergo batching.
+
+  # batch-size = 1000 # will flush if this many points get buffered
+  # batch-pending = 5 # number of batches that may be pending in memory
+  # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
+
+###
+### [[udp]]
+###
+### Controls the listeners for InfluxDB line protocol data via UDP.
+###
+
+[[udp]]
+  enabled = false
+  # bind-address = ""
+  # database = "udp"
+  # retention-policy = ""
+
+  # These next lines control how batching works. You should have this enabled
+  # otherwise you could get dropped metrics or poor performance. Batching
+  # will buffer points in memory if you have many coming in.
+
+  # batch-size = 1000 # will flush if this many points get buffered
+  # batch-pending = 5 # number of batches that may be pending in memory
+  # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
+  # read-buffer = 0 # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
+
+###
+### [continuous_queries]
+###
+### Controls how continuous queries are run within InfluxDB.
+###
+
+[continuous_queries]
+  log-enabled = true
+  enabled = true
+  recompute-previous-n = 2
+  recompute-no-older-than = "10m"
+  compute-runs-per-interval = 10
+  compute-no-more-than = "2m"
