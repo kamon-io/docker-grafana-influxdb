@@ -16,16 +16,10 @@ RUN		apt-get -y update && apt-get -y upgrade
 # Install all prerequisites
 RUN 	apt-get -y install wget nginx-light supervisor curl
 
-#RUN 	apt-get -y install software-properties-common
-#RUN		add-apt-repository -y ppa:chris-lea/node.js && apt-get -y update
-#RUN		apt-get -y install python-django-tagging python-simplejson python-memcache python-ldap python-cairo \
-#			python-pysqlite2 python-support python-pip gunicorn nodejs git openjdk-7-jre build-essential python-dev
-
 # Install Grafana to /src/grafana
 RUN		mkdir -p src/grafana && cd src/grafana && \
 			wget -nv https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-${GRAFANA_VERSION}.linux-x64.tar.gz -O grafana.tar.gz && \
 			tar xzf grafana.tar.gz --strip-components=1 && rm grafana.tar.gz
-
 
 # Install InfluxDB
 RUN		wget -nv https://dl.influxdata.com/influxdb/releases/influxdb_${INFLUXDB_VERSION}_amd64.deb && \
