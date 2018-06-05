@@ -1,4 +1,4 @@
-FROM	ubuntu:17.04
+FROM	ubuntu:17.10
 
 ENV GRAFANA_VERSION 4.3.2
 ENV INFLUXDB_VERSION 1.2.4
@@ -6,7 +6,7 @@ ENV INFLUXDB_VERSION 1.2.4
 # Prevent some error messages
 ENV DEBIAN_FRONTEND noninteractive
 
-#RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
+#RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ Utopic Unicorn' >> /etc/apt/sources.list
 RUN		apt-get -y update && apt-get -y upgrade
 
 # ---------------- #
