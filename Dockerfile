@@ -6,7 +6,7 @@ ENV INFLUXDB_VERSION 1.6.0
 # Prevent some error messages
 ENV DEBIAN_FRONTEND noninteractive
 
-#RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ trusty universe' >> /etc/apt/sources.list
+#RUN		echo 'deb http://us.archive.ubuntu.com/ubuntu/ Utopic Unicorn' >> /etc/apt/sources.list
 RUN		apt-get -y update && apt-get -y upgrade
 
 # ---------------- #
