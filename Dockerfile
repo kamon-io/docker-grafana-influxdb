@@ -47,7 +47,7 @@ ADD		grafana/run.sh /usr/local/bin/run_grafana
 ADD		./configure.sh /configure.sh
 ADD		./set_grafana.sh /set_grafana.sh
 ADD		./set_influxdb.sh /set_influxdb.sh
-RUN 		/configure.sh
+RUN 		chmod +x /configure.sh /set_*.sh  && /configure.sh
 
 # Configure nginx and supervisord
 ADD		./nginx/nginx.conf /etc/nginx/nginx.conf
